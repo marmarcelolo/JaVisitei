@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Já visitei? - Sistema de Acompanhamento de Cobertura de Território para ACEs</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --info-color: #17a2b8;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+        }
+        
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 300;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #219653;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+        }
+        
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-info {
+            background-color: var(--info-color);
+        }
+        
+        .btn-info:hover {
+            background-color: #138496;
+        }
+        
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+        
+        .localities-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .locality-card {
+            min-height: 180px;
+            border-radius: 10px;
+            padding: 20px;
+            color: white;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+        }
+        
+        .locality-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .locality-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .blocks-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-top: 25px;
+        }
+        
+        .locality-blocks {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        .locality-blocks-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f1f1;
+        }
+        
+        .locality-blocks-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .locality-blocks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .block {
+            border-radius: 8px;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border-top: 4px solid;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .block::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: currentColor;
+            opacity: 0.7;
+        }
+        
+        .block.completed {
+            border-color: var(--success-color);
+            color: var(--success-color);
+        }
+        
+        .block.in-progress {
+            border-color: var(--warning-color);
+            color: var(--warning-color);
+        }
+        
+        .block.pending {
+            border-color: var(--danger-color);
+            color: var(--danger-color);
+        }
+        
+        .block-number {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .block-status {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background-color: currentColor;
+            color: white;
+        }
+        
+        .block-details {
+            margin: 12px 0;
+            font-size: 0.9rem;
+        }
+        
+        .block-progress {
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .block-progress-bar {
+            height: 100%;
+            background-color: currentColor;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .block-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            gap: 8px;
+        }
+        
+        .block-actions button {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+        
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-option.selected {
+            border-color: #333;
+            transform: scale(1.1);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(2px);
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 550px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: modalAppear 0.3s ease;
+        }
+        
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e1e8ed;
+        }
+        
+        .close-modal {
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #7f8c8d;
+            transition: color 0.3s;
+        }
+        
+        .close-modal:hover {
+            color: var(--danger-color);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-item:hover {
+            transform: translateY(-3px);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .filter-select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #e1e8ed;
+            background-color: white;
+        }
+        
+        .reset-all-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e8ed;
+            text-align: center;
+        }
+        
+        footer {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+        }
+        
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .credits {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 10px;
+        }
+        
+        .credits a {
+            color: white;
+            text-decoration: none;
+        }
+        
+        .credits a:hover {
+            text-decoration: underline;
+        }
+        
+        .locality-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .locality-actions button {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+        
+        .completion-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            h2 {
+                font-size: 1.3rem;
+            }
+            
+            .localities-container,
+            .locality-blocks-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                flex-direction: column;
+            }
+            
+            .color-palette {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .locality-blocks-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            .locality-actions {
+                flex-direction: column;
+            }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: var(--success-color);
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.error {
+            background: var(--danger-color);
+        }
+        
+        .notification.warning {
+            background: var(--warning-color);
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="notification" id="notification"></div>
+
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-map-marked-alt"></i> Já visitei?</h1>
+            <h2>Sistema de Acompanhamento de Cobertura de Território para ACEs</h2>
+        </header>
+        
+        <div class="card">
+            <h3><i class="fas fa-cog"></i> Configuração de Localidades</h3>
+            <p>Adicione as localidades e os quarteirões que deseja monitorar:</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label for="locality-name"><i class="fas fa-map-marker-alt"></i> Nome da Localidade:</label>
+                    <input type="text" id="locality-name" placeholder="Ex: Centro, Bairro X, etc.">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-palette"></i> Cor de identificação:</label>
+                    <div class="color-palette" id="color-palette">
+                        <!-- Cores serão adicionadas dinamicamente -->
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                        <input type="color" id="color-picker" value="#3498db">
+                        <span>Cor personalizada</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label for="block-start"><i class="fas fa-hashtag"></i> Quarteirão inicial:</label>
+                    <input type="number" id="block-start" placeholder="Início" min="1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="block-end"><i class="fas fa-hashtag"></i> Quarteirão final:</label>
+                    <input type="number" id="block-end" placeholder="Fim" min="1">
+                </div>
+            </div>
+            
+            <button id="btn-add-locality"><i class="fas fa-plus-circle"></i> Adicionar Localidade</button>
+        </div>
+        
+        <div id="localities-container" class="localities-container">
+            <!-- As localidades serão adicionadas aqui dinamicamente -->
+        </div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="total-blocks">0</div>
+                <div class="stat-label">Total de Quarteirões</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="completed-blocks">0</div>
+                <div class="stat-label">Concluídos</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="in-progress-blocks">0</div>
+                <div class="stat-label">Em Andamento</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="progress-percentage">0%</div>
+                <div class="stat-label">Progresso Geral</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3><i class="fas fa-th-large"></i> Quadro de Quarteirões</h3>
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="filter-locality">Localidade:</label>
+                        <select id="filter-locality" class="filter-select">
+                            <option value="all">Todas</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-status">Status:</label>
+                        <select id="filter-status" class="filter-select">
+                            <option value="all">Todos</option>
+                            <option value="completed">Concluídos</option>
+                            <option value="in-progress">Em Andamento</option>
+                            <option value="pending">Pendentes</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-sort">Ordenar por:</label>
+                        <select id="filter-sort" class="filter-select">
+                            <option value="number">Número</option>
+                            <option value="completion-date">Data de Conclusão</option>
+                            <option value="progress">Progresso</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-order">Ordem:</label>
+                        <select id="filter-order" class="filter-select">
+                            <option value="asc">Crescente</option>
+                            <option value="desc">Decrescente</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="blocks-container" class="blocks-container">
+                <!-- Os blocos de quarteirões serão adicionados aqui dinamicamente -->
+            </div>
+            
+            <div class="reset-all-section">
+                <button class="btn-warning" id="btn-reset-all">
+                    <i class="fas fa-undo"></i> Marcar Todos os Quarteirões como Pendentes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <p>Já visitei? - Sistema de Acompanhamento de Cobertura de Território para ACEs</p>
+            <p class="credits">
+                Desenvolvido por <a href="mailto:marcelo137@gmail.com">Marcelo Rodrigues</a>
+            </p>
+        </div>
+    </footer>
+    
+    <!-- Modal para editar dados do quarteirão -->
+    <div id="block-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Dados do Quarteirão <span id="modal-block-number"></span></h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label for="completion-date"><i class="fas fa-calendar-alt"></i> Data de Conclusão:</label>
+                    <input type="date" id="completion-date">
+                </div>
+                
+                <div class="form-group">
+                    <label for="status"><i class="fas fa-tasks"></i> Status:</label>
+                    <select id="status">
+                        <option value="pending">Pendente</option>
+                        <option value="in-progress">Em Andamento</option>
+                        <option value="completed">Concluído</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label for="total-properties"><i class="fas fa-home"></i> Total de Imóveis:</label>
+                    <input type="number" id="total-properties" min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="inspected-properties"><i class="fas fa-search"></i> Imóveis Inspecionados:</label>
+                    <input type="number" id="inspected-properties" min="0">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="observations"><i class="fas fa-sticky-note"></i> Observações:</label>
+                <textarea id="observations" rows="4" placeholder="Observações sobre o quarteirão..."></textarea>
+            </div>
+            
+            <div class="block-actions">
+                <button id="btn-save-block" class="btn-success"><i class="fas fa-save"></i> Salvar</button>
+                <button id="btn-cancel-block" class="btn-danger"><i class="fas fa-times"></i> Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar localidade -->
+    <div id="locality-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Editar Localidade</h3>
+                <span class="close-locality-modal">&times;</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="edit-locality-name">Nome da Localidade:</label>
+                <input type="text" id="edit-locality-name">
+            </div>
+            
+            <div class="form-group">
+                <label>Cor de identificação:</label>
+                <div class="color-palette" id="edit-color-palette">
+                    <!-- Cores serão adicionadas dinamicamente -->
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                    <input type="color" id="edit-color-picker" value="#3498db">
+                    <span>Cor personalizada</span>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label for="edit-block-start">Quarteirão inicial:</label>
+                    <input type="number" id="edit-block-start" min="1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-block-end">Quarteirão final:</label>
+                    <input type="number" id="edit-block-end" min="1">
+                </div>
+            </div>
+            
+            <div class="block-actions">
+                <button id="btn-save-locality" class="btn-success"><i class="fas fa-save"></i> Salvar Alterações</button>
+                <button id="btn-cancel-locality" class="btn-danger"><i class="fas fa-times"></i> Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dados da aplicação
+        let localities = [];
+        let currentEditingBlock = null;
+        let currentEditingLocality = null;
+        let filters = {
+            locality: 'all',
+            status: 'all',
+            sort: 'number',
+            order: 'asc'
+        };
+        
+        // Paleta de cores pré-definidas (apenas 7 cores)
+        const colorPalette = [
+            '#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22'
+        ];
+        
+        // Elementos DOM
+        const localitiesContainer = document.getElementById('localities-container');
+        const blocksContainer = document.getElementById('blocks-container');
+        const blockModal = document.getElementById('block-modal');
+        const localityModal = document.getElementById('locality-modal');
+        const filterLocality = document.getElementById('filter-locality');
+        const filterStatus = document.getElementById('filter-status');
+        const filterSort = document.getElementById('filter-sort');
+        const filterOrder = document.getElementById('filter-order');
+        const colorPaletteContainer = document.getElementById('color-palette');
+        const editColorPaletteContainer = document.getElementById('edit-color-palette');
+        const colorPicker = document.getElementById('color-picker');
+        const editColorPicker = document.getElementById('edit-color-picker');
+        const notification = document.getElementById('notification');
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Inicializando aplicação...');
+            
+            // Inicializar componentes
+            initializeColorPalette();
+            initializeEditColorPalette();
+            loadFromLocalStorage();
+            renderLocalities();
+            renderBlocks();
+            updateStats();
+            updateFilters();
+            
+            // Event listeners para botões principais
+            document.getElementById('btn-add-locality').addEventListener('click', addLocality);
+            document.getElementById('btn-save-block').addEventListener('click', saveBlockData);
+            document.getElementById('btn-cancel-block').addEventListener('click', closeBlockModal);
+            document.querySelector('.close-modal').addEventListener('click', closeBlockModal);
+            document.getElementById('btn-reset-all').addEventListener('click', resetAllBlocks);
+            document.getElementById('btn-save-locality').addEventListener('click', saveLocalityChanges);
+            document.getElementById('btn-cancel-locality').addEventListener('click', closeLocalityModal);
+            document.querySelector('.close-locality-modal').addEventListener('click', closeLocalityModal);
+            
+            // Event listeners para filtros
+            filterLocality.addEventListener('change', function() {
+                filters.locality = this.value;
+                renderBlocks();
+            });
+            
+            filterStatus.addEventListener('change', function() {
+                filters.status = this.value;
+                renderBlocks();
+            });
+            
+            filterSort.addEventListener('change', function() {
+                filters.sort = this.value;
+                renderBlocks();
+            });
+            
+            filterOrder.addEventListener('change', function() {
+                filters.order = this.value;
+                renderBlocks();
+            });
+            
+            // Fechar modal ao clicar fora
+            window.addEventListener('click', function(event) {
+                if (event.target === blockModal) {
+                    closeBlockModal();
+                }
+                if (event.target === localityModal) {
+                    closeLocalityModal();
+                }
+            });
+            
+            console.log('Aplicação inicializada com sucesso!');
+        });
+        
+        // Inicializar paleta de cores
+        function initializeColorPalette() {
+            console.log('Inicializando paleta de cores...');
+            colorPaletteContainer.innerHTML = '';
+            
+            colorPalette.forEach(color => {
+                const colorOption = document.createElement('div');
+                colorOption.className = 'color-option';
+                colorOption.style.backgroundColor = color;
+                colorOption.dataset.color = color;
+                
+                colorOption.addEventListener('click', function() {
+                    // Remover seleção anterior
+                    document.querySelectorAll('#color-palette .color-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Selecionar esta cor
+                    this.classList.add('selected');
+                    colorPicker.value = color;
+                });
+                
+                colorPaletteContainer.appendChild(colorOption);
+            });
+            
+            // Selecionar primeira cor por padrão
+            if (colorPalette.length > 0) {
+                colorPaletteContainer.firstChild.classList.add('selected');
+                colorPicker.value = colorPalette[0];
+            }
+        }
+        
+        function initializeEditColorPalette() {
+            console.log('Inicializando paleta de cores de edição...');
+            editColorPaletteContainer.innerHTML = '';
+            
+            colorPalette.forEach(color => {
+                const colorOption = document.createElement('div');
+                colorOption.className = 'color-option';
+                colorOption.style.backgroundColor = color;
+                colorOption.dataset.color = color;
+                
+                colorOption.addEventListener('click', function() {
+                    // Remover seleção anterior
+                    document.querySelectorAll('#edit-color-palette .color-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Selecionar esta cor
+                    this.classList.add('selected');
+                    editColorPicker.value = color;
+                });
+                
+                editColorPaletteContainer.appendChild(colorOption);
+            });
+        }
+        
+        // Funções para Localidades
+        function addLocality() {
+            console.log('Adicionando localidade...');
+            const name = document.getElementById('locality-name').value.trim();
+            const color = colorPicker.value;
+            const start = parseInt(document.getElementById('block-start').value);
+            const end = parseInt(document.getElementById('block-end').value);
+            
+            if (!name || isNaN(start) || isNaN(end) || start > end) {
+                showNotification('Preencha todos os campos corretamente.', 'error');
+                return;
+            }
+            
+            if (end - start > 100) {
+                if (!confirm(`Você está adicionando ${end - start + 1} quarteirões. Tem certeza que deseja continuar?`)) {
+                    return;
+                }
+            }
+            
+            const locality = {
+                id: Date.now(),
+                name,
+                color,
+                blocks: generateBlocks(start, end),
+                createdAt: new Date().toISOString()
+            };
+            
+            localities.push(locality);
+            renderLocalities();
+            renderBlocks();
+            updateStats();
+            updateFilters();
+            saveToLocalStorage();
+            
+            // Limpar formulário
+            document.getElementById('locality-name').value = '';
+            document.getElementById('block-start').value = '';
+            document.getElementById('block-end').value = '';
+            
+            showNotification(`Localidade "${name}" adicionada com sucesso!`);
+        }
+        
+        function generateBlocks(start, end) {
+            const blocks = [];
+            for (let i = start; i <= end; i++) {
+                blocks.push({
+                    number: i,
+                    completionDate: null,
+                    totalProperties: 0,
+                    inspectedProperties: 0,
+                    observations: '',
+                    status: 'pending',
+                    lastUpdated: null
+                });
+            }
+            return blocks;
+        }
+        
+        function renderLocalities() {
+            console.log('Renderizando localidades...');
+            localitiesContainer.innerHTML = '';
+            
+            if (localities.length === 0) {
+                localitiesContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-map"></i>
+                        <h3>Nenhuma localidade cadastrada</h3>
+                        <p>Adicione sua primeira localidade usando o formulário acima.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            localities.forEach(locality => {
+                const completedBlocks = locality.blocks.filter(block => block.status === 'completed').length;
+                const inProgressBlocks = locality.blocks.filter(block => block.status === 'in-progress').length;
+                const totalBlocks = locality.blocks.length;
+                const progress = totalBlocks > 0 ? Math.round(completedBlocks/totalBlocks*100) : 0;
+                
+                const localityCard = document.createElement('div');
+                localityCard.className = 'locality-card';
+                localityCard.style.backgroundColor = locality.color;
+                
+                localityCard.innerHTML = `
+                    <div>
+                        <div class="locality-name">${locality.name}</div>
+                        <div>Quarteirões: ${locality.blocks[0].number} a ${locality.blocks[locality.blocks.length - 1].number}</div>
+                        <div class="completion-stats">
+                            <span><i class="fas fa-check-circle"></i> ${completedBlocks}</span>
+                            <span><i class="fas fa-play-circle"></i> ${inProgressBlocks}</span>
+                            <span><i class="fas fa-clock"></i> ${totalBlocks - completedBlocks - inProgressBlocks}</span>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <div style="height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; overflow: hidden;">
+                                <div style="height: 100%; width: ${progress}%; background: white; border-radius: 4px; transition: width 0.5s ease;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="locality-actions">
+                        <button class="btn-small btn-warning" onclick="markLocalityPending(${locality.id})">
+                            <i class="fas fa-undo"></i> Pendentes
+                        </button>
+                        <button class="btn-small btn-info" onclick="editLocality(${locality.id})">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="btn-small btn-danger" onclick="removeLocality(${locality.id})">
+                            <i class="fas fa-trash"></i> Excluir
+                        </button>
+                    </div>
+                `;
+                
+                localitiesContainer.appendChild(localityCard);
+            });
+        }
+        
+        function removeLocality(id) {
+            const locality = localities.find(l => l.id === id);
+            if (confirm(`Tem certeza que deseja remover a localidade "${locality.name}"? Todos os dados dos quarteirões serão perdidos.`)) {
+                localities = localities.filter(locality => locality.id !== id);
+                renderLocalities();
+                renderBlocks();
+                updateStats();
+                updateFilters();
+                saveToLocalStorage();
+                showNotification(`Localidade "${locality.name}" removida.`);
+            }
+        }
+        
+        function editLocality(id) {
+            console.log('Editando localidade:', id);
+            const locality = localities.find(l => l.id === id);
+            currentEditingLocality = locality;
+            
+            document.getElementById('edit-locality-name').value = locality.name;
+            editColorPicker.value = locality.color;
+            document.getElementById('edit-block-start').value = locality.blocks[0].number;
+            document.getElementById('edit-block-end').value = locality.blocks[locality.blocks.length - 1].number;
+            
+            // Selecionar a cor atual na paleta
+            document.querySelectorAll('#edit-color-palette .color-option').forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.dataset.color === locality.color) {
+                    opt.classList.add('selected');
+                }
+            });
+            
+            localityModal.style.display = 'flex';
+        }
+        
+        function saveLocalityChanges() {
+            console.log('Salvando alterações da localidade...');
+            if (!currentEditingLocality) return;
+            
+            const name = document.getElementById('edit-locality-name').value.trim();
+            const color = editColorPicker.value;
+            const newStart = parseInt(document.getElementById('edit-block-start').value);
+            const newEnd = parseInt(document.getElementById('edit-block-end').value);
+            
+            if (!name || isNaN(newStart) || isNaN(newEnd) || newStart > newEnd) {
+                showNotification('Preencha todos os campos corretamente.', 'error');
+                return;
+            }
+            
+            const currentStart = currentEditingLocality.blocks[0].number;
+            const currentEnd = currentEditingLocality.blocks[currentEditingLocality.blocks.length - 1].number;
+            
+            // Verificar se houve alteração nos quarteirões
+            if (newStart !== currentStart || newEnd !== currentEnd) {
+                if (!confirm(`Alterar os quarteirões de ${currentStart}-${currentEnd} para ${newStart}-${newEnd}? Os dados dos quarteirões serão redefinidos.`)) {
+                    return;
+                }
+                
+                // Gerar novos blocos
+                currentEditingLocality.blocks = generateBlocks(newStart, newEnd);
+            }
+            
+            currentEditingLocality.name = name;
+            currentEditingLocality.color = color;
+            
+            renderLocalities();
+            renderBlocks();
+            updateStats();
+            updateFilters();
+            saveToLocalStorage();
+            closeLocalityModal();
+            
+            showNotification(`Localidade "${name}" atualizada com sucesso!`);
+        }
+        
+        function closeLocalityModal() {
+            localityModal.style.display = 'none';
+            currentEditingLocality = null;
+        }
+        
+        function markLocalityPending(localityId) {
+            const locality = localities.find(l => l.id === localityId);
+            
+            if (confirm(`Marcar TODOS os quarteirões de "${locality.name}" como Pendentes?`)) {
+                locality.blocks.forEach(block => {
+                    // Preserva o total de imóveis
+                    const totalProperties = block.totalProperties;
+                    
+                    block.completionDate = null;
+                    block.inspectedProperties = 0;
+                    block.observations = '';
+                    block.status = 'pending';
+                    block.lastUpdated = new Date().toISOString();
+                    
+                    // Mantém o total de imóveis
+                    block.totalProperties = totalProperties;
+                });
+                
+                renderLocalities();
+                renderBlocks();
+                updateStats();
+                saveToLocalStorage();
+                showNotification(`Todos os quarteirões de ${locality.name} marcados como pendentes.`);
+            }
+        }
+        
+        // Funções para Blocos (Quarteirões)
+        function renderBlocks() {
+            console.log('Renderizando blocos...');
+            blocksContainer.innerHTML = '';
+            
+            let hasBlocks = false;
+            let filteredLocalities = localities;
+            
+            // Aplicar filtro de localidade
+            if (filters.locality !== 'all') {
+                filteredLocalities = localities.filter(locality => locality.id.toString() === filters.locality);
+            }
+            
+            filteredLocalities.forEach(locality => {
+                let localityBlocks = [...locality.blocks];
+                
+                // Aplicar filtro de status
+                if (filters.status !== 'all') {
+                    localityBlocks = localityBlocks.filter(block => block.status === filters.status);
+                }
+                
+                // Aplicar ordenação
+                localityBlocks.sort((a, b) => {
+                    let result = 0;
+                    
+                    switch(filters.sort) {
+                        case 'completion-date':
+                            // Sempre colocar concluídos no topo
+                            if (a.status === 'completed' && b.status !== 'completed') return -1;
+                            if (a.status !== 'completed' && b.status === 'completed') return 1;
+                            
+                            // Ambos concluídos - ordenar por data
+                            if (a.status === 'completed' && b.status === 'completed') {
+                                if (!a.completionDate && !b.completionDate) result = a.number - b.number;
+                                else if (!a.completionDate) return 1;
+                                else if (!b.completionDate) return -1;
+                                else result = new Date(b.completionDate) - new Date(a.completionDate);
+                            } else {
+                                // Ambos não concluídos - ordenar por número
+                                result = a.number - b.number;
+                            }
+                            break;
+                            
+                        case 'progress':
+                            const progressA = a.totalProperties > 0 ? a.inspectedProperties / a.totalProperties : 0;
+                            const progressB = b.totalProperties > 0 ? b.inspectedProperties / b.totalProperties : 0;
+                            result = progressB - progressA;
+                            break;
+                            
+                        default: // 'number'
+                            result = a.number - b.number;
+                    }
+                    
+                    // Aplicar ordem (crescente/decrescente)
+                    return filters.order === 'desc' ? -result : result;
+                });
+                
+                if (localityBlocks.length > 0) {
+                    hasBlocks = true;
+                    
+                    const localitySection = document.createElement('div');
+                    localitySection.className = 'locality-blocks';
+                    
+                    const completedBlocks = locality.blocks.filter(block => block.status === 'completed').length;
+                    const totalBlocks = locality.blocks.length;
+                    const progress = totalBlocks > 0 ? Math.round(completedBlocks/totalBlocks*100) : 0;
+                    
+                    localitySection.innerHTML = `
+                        <div class="locality-blocks-header">
+                            <div class="locality-blocks-title" style="color: ${locality.color}">
+                                <i class="fas fa-map-marker-alt"></i> ${locality.name}
+                                <span style="font-size: 0.9rem; font-weight: normal; margin-left: 10px;">
+                                    (${completedBlocks}/${totalBlocks} concluídos)
+                                </span>
+                            </div>
+                            <div>
+                                <span>Progresso: ${progress}%</span>
+                                <div style="height: 8px; width: 150px; background: #f1f1f1; border-radius: 4px; margin-top: 5px; overflow: hidden;">
+                                    <div style="height: 100%; width: ${progress}%; background: ${locality.color}; border-radius: 4px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="locality-blocks-grid" id="blocks-${locality.id}">
+                            <!-- Blocos serão adicionados aqui -->
+                        </div>
+                    `;
+                    
+                    blocksContainer.appendChild(localitySection);
+                    
+                    const blocksGrid = document.getElementById(`blocks-${locality.id}`);
+                    
+                    localityBlocks.forEach(block => {
+                        const blockElement = document.createElement('div');
+                        blockElement.className = `block ${block.status}`;
+                        
+                        const progress = block.totalProperties > 0 ? 
+                            Math.round(block.inspectedProperties/block.totalProperties*100) : 0;
+                        
+                        let statusText = '';
+                        switch(block.status) {
+                            case 'completed': statusText = 'Concluído'; break;
+                            case 'in-progress': statusText = 'Em Andamento'; break;
+                            default: statusText = 'Pendente';
+                        }
+                        
+                        blockElement.innerHTML = `
+                            <div class="block-number">
+                                <span>Q${block.number}</span>
+                                <span class="block-status">${statusText}</span>
+                            </div>
+                            
+                            ${block.status !== 'pending' ? `
+                                <div class="block-details">
+                                    ${block.completionDate ? `<div><i class="fas fa-calendar"></i> ${formatDate(block.completionDate)}</div>` : ''}
+                                    <div><i class="fas fa-home"></i> ${block.inspectedProperties}/${block.totalProperties} imóveis</div>
+                                    ${block.observations ? `<div><i class="fas fa-sticky-note"></i> ${truncateText(block.observations, 50)}</div>` : ''}
+                                </div>
+                                
+                                ${block.status === 'in-progress' ? `
+                                    <div class="block-progress">
+                                        <div class="block-progress-bar" style="width: ${progress}%"></div>
+                                    </div>
+                                    <div style="font-size: 0.8rem; text-align: right;">${progress}% concluído</div>
+                                ` : ''}
+                            ` : `
+                                <div class="block-details">
+                                    <div><i class="fas fa-clock"></i> Aguardando inspeção</div>
+                                </div>
+                            `}
+                            
+                            <div class="block-actions">
+                                <button onclick="editBlock(${locality.id}, ${block.number})">
+                                    <i class="fas fa-edit"></i> ${block.status === 'pending' ? 'Iniciar' : 'Editar'}
+                                </button>
+                                ${block.status !== 'pending' ? `
+                                    <button class="btn-warning" onclick="resetBlock(${locality.id}, ${block.number})">
+                                        <i class="fas fa-undo"></i> Reiniciar
+                                    </button>
+                                ` : ''}
+                            </div>
+                        `;
+                        
+                        blocksGrid.appendChild(blockElement);
+                    });
+                }
+            });
+            
+            if (!hasBlocks) {
+                blocksContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-th-large"></i>
+                        <h3>Nenhum quarteirão encontrado</h3>
+                        <p>Adicione mais localidades ou ajuste os filtros.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function editBlock(localityId, blockNumber) {
+            console.log('Editando bloco:', localityId, blockNumber);
+            const locality = localities.find(l => l.id === localityId);
+            const block = locality.blocks.find(b => b.number === blockNumber);
+            
+            currentEditingBlock = { localityId, blockNumber };
+            
+            document.getElementById('modal-block-number').textContent = `${locality.name} - Q${block.number}`;
+            document.getElementById('completion-date').value = block.completionDate || '';
+            document.getElementById('total-properties').value = block.totalProperties || '';
+            document.getElementById('inspected-properties').value = block.inspectedProperties || '';
+            document.getElementById('observations').value = block.observations || '';
+            
+            // Se for um quarteirão pendente, definir status como "Concluído" por padrão
+            document.getElementById('status').value = block.status === 'pending' ? 'completed' : block.status;
+            
+            blockModal.style.display = 'flex';
+        }
+        
+        function resetBlock(localityId, blockNumber) {
+            if (confirm('Tem certeza que deseja reiniciar este quarteirão?')) {
+                const locality = localities.find(l => l.id === localityId);
+                const block = locality.blocks.find(b => b.number === blockNumber);
+                
+                // Preserva o total de imóveis
+                const totalProperties = block.totalProperties;
+                
+                block.completionDate = null;
+                block.inspectedProperties = 0;
+                block.observations = '';
+                block.status = 'pending';
+                block.lastUpdated = new Date().toISOString();
+                
+                // Mantém o total de imóveis
+                block.totalProperties = totalProperties;
+                
+                renderLocalities();
+                renderBlocks();
+                updateStats();
+                saveToLocalStorage();
+                showNotification(`Quarteirão Q${block.number} reiniciado.`);
+            }
+        }
+        
+        function resetAllBlocks() {
+            if (confirm('Tem certeza que deseja marcar TODOS os quarteirões como Pendentes? Esta ação não pode ser desfeita.')) {
+                localities.forEach(locality => {
+                    locality.blocks.forEach(block => {
+                        // Preserva o total de imóveis
+                        const totalProperties = block.totalProperties;
+                        
+                        block.completionDate = null;
+                        block.inspectedProperties = 0;
+                        block.observations = '';
+                        block.status = 'pending';
+                        block.lastUpdated = new Date().toISOString();
+                        
+                        // Mantém o total de imóveis
+                        block.totalProperties = totalProperties;
+                    });
+                });
+                
+                renderLocalities();
+                renderBlocks();
+                updateStats();
+                saveToLocalStorage();
+                showNotification('Todos os quarteirões foram marcados como pendentes.');
+            }
+        }
+        
+        function saveBlockData() {
+            console.log('Salvando dados do bloco...');
+            if (!currentEditingBlock) return;
+            
+            const locality = localities.find(l => l.id === currentEditingBlock.localityId);
+            const block = locality.blocks.find(b => b.number === currentEditingBlock.blockNumber);
+            
+            const completionDate = document.getElementById('completion-date').value;
+            const totalProperties = parseInt(document.getElementById('total-properties').value) || 0;
+            const inspectedProperties = parseInt(document.getElementById('inspected-properties').value) || 0;
+            const observations = document.getElementById('observations').value;
+            const status = document.getElementById('status').value;
+            
+            // Validar dados
+            if (inspectedProperties > totalProperties) {
+                showNotification('O número de imóveis inspecionados não pode ser maior que o total de imóveis.', 'error');
+                return;
+            }
+            
+            if (status === 'completed' && !completionDate) {
+                showNotification('Para marcar como concluído, é necessário informar a data de conclusão.', 'error');
+                return;
+            }
+            
+            block.completionDate = completionDate;
+            block.totalProperties = totalProperties;
+            block.inspectedProperties = inspectedProperties;
+            block.observations = observations;
+            block.status = status;
+            block.lastUpdated = new Date().toISOString();
+            
+            renderLocalities();
+            renderBlocks();
+            updateStats();
+            saveToLocalStorage();
+            closeBlockModal();
+            
+            showNotification(`Quarteirão Q${block.number} atualizado com sucesso!`);
+        }
+        
+        function closeBlockModal() {
+            blockModal.style.display = 'none';
+            currentEditingBlock = null;
+        }
+        
+        // Funções para Filtros
+        function updateFilters() {
+            console.log('Atualizando filtros...');
+            // Atualizar opções de localidade no filtro
+            filterLocality.innerHTML = '<option value="all">Todas</option>';
+            localities.forEach(locality => {
+                const option = document.createElement('option');
+                option.value = locality.id;
+                option.textContent = locality.name;
+                filterLocality.appendChild(option);
+            });
+        }
+        
+        // Sistema de Notificações
+        function showNotification(message, type = 'success') {
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Funções Utilitárias
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR');
+        }
+        
+        function truncateText(text, maxLength) {
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength) + '...';
+        }
+        
+        function updateStats() {
+            let totalBlocks = 0;
+            let completedBlocks = 0;
+            let inProgressBlocks = 0;
+            
+            localities.forEach(locality => {
+                totalBlocks += locality.blocks.length;
+                completedBlocks += locality.blocks.filter(block => block.status === 'completed').length;
+                inProgressBlocks += locality.blocks.filter(block => block.status === 'in-progress').length;
+            });
+            
+            document.getElementById('total-blocks').textContent = totalBlocks;
+            document.getElementById('completed-blocks').textContent = completedBlocks;
+            document.getElementById('in-progress-blocks').textContent = inProgressBlocks;
+            document.getElementById('progress-percentage').textContent = 
+                totalBlocks > 0 ? Math.round(completedBlocks/totalBlocks*100) + '%' : '0%';
+        }
+        
+        // Persistência de Dados
+        function saveToLocalStorage() {
+            const data = {
+                localities,
+                lastSave: new Date().toISOString()
+            };
+            localStorage.setItem('aceTerritoryControl', JSON.stringify(data));
+        }
+        
+        function loadFromLocalStorage() {
+            const savedData = localStorage.getItem('aceTerritoryControl');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    localities = data.localities || [];
+                    console.log('Dados carregados:', localities.length, 'localidades');
+                } catch (e) {
+                    console.error('Erro ao carregar dados:', e);
+                    localities = [];
+                }
+            }
+        }
+    </script>
+</body>
+</html>
