@@ -160,22 +160,6 @@ A aplicação é totalmente responsiva e funciona em:
 
     Notificações de feedback
 
-🔧 Desenvolvimento
-Estrutura do Projeto
-text
-
-já-visitei/
-├── index.html          # Aplicação principal
-├── README.md           # Este arquivo
-
-Para Executar
-
-    Clone o repositório
-
-    Abra o arquivo index.html em um navegador moderno
-
-    Comece a usar!
-
 📄 Licença
 
 Este projeto é de uso livre para Agentes de Combate a Endemias e profissionais de saúde pública.
@@ -184,13 +168,5 @@ Este projeto é de uso livre para Agentes de Combate a Endemias e profissionais 
 Marcelo Rodrigues
 📧 marcelo137@gmail.com
 🆘 Suporte
-
-Em caso de problemas ou sugestões:
-
-    Verifique se está usando um navegador atualizado
-
-    Limite o número de quarteirões por localidade (recomendado: até 100)
-
-    Para questões técnicas, entre em contato com o desenvolvedor
 
 ⭐ Se este projeto foi útil, considere dar uma estrela no repositório!
