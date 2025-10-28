@@ -1,0 +1,1904 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Já Visitei? - Sistema de Acompanhamento de Cobertura de Território para ACEs</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --info-color: #17a2b8;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+        }
+        
+        /* Skip link visibility and focus styles for accessibility */
+        .skip-link {
+            position: absolute;
+            left: -999px;
+            top: auto;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            z-index: 10000;
+        }
+        .skip-link:focus {
+            left: 10px;
+            top: 10px;
+            width: auto;
+            height: auto;
+            padding: 8px 12px;
+            background: #fff;
+            color: var(--primary-color);
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            text-decoration: none;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+        }
+        
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 300;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 44px; /* touch target */
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Visible focus for keyboard users */
+        :focus {
+            outline: none;
+        }
+        :focus-visible, button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .color-option:focus-visible {
+            box-shadow: 0 0 0 4px rgba(52,152,219,0.22);
+            border-radius: 6px;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #219653;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+        }
+        
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-info {
+            background-color: var(--info-color);
+        }
+        
+        .btn-info:hover {
+            background-color: #138496;
+        }
+        
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+        
+        .localities-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .locality-card {
+            min-height: 180px;
+            border-radius: 10px;
+            padding: 20px;
+            color: white;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+        }
+
+        /* Add subtle dark overlay to improve text contrast on variable background colors */
+        .locality-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: linear-gradient(rgba(0,0,0,0.22), rgba(0,0,0,0.22));
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Ensure card children are above the overlay and focusable outline is visible */
+        .locality-card > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .locality-card:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(52,152,219,0.25), 0 6px 18px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+        }
+        
+        .locality-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .locality-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .blocks-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-top: 25px;
+        }
+        
+        .locality-blocks {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        .locality-blocks-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f1f1;
+        }
+        
+        .locality-blocks-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .locality-blocks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .block {
+            border-radius: 8px;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border-top: 4px solid;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .block::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: currentColor;
+            opacity: 0.7;
+        }
+        
+        .block.completed {
+            border-color: var(--success-color);
+            color: var(--success-color);
+        }
+        
+        .block.in-progress {
+            border-color: var(--warning-color);
+            color: var(--warning-color);
+        }
+        
+        .block.pending {
+            border-color: var(--danger-color);
+            color: var(--danger-color);
+        }
+        
+        .block-number {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .block-status {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background-color: currentColor;
+            color: white;
+        }
+        
+        .block-details {
+            margin: 12px 0;
+            font-size: 0.9rem;
+        }
+        
+        .block-progress {
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .block-progress-bar {
+            height: 100%;
+            background-color: currentColor;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .block-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            gap: 8px;
+        }
+        
+        .block-actions button {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+        
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s, border-color 0.2s;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-option.selected {
+            border-color: #333;
+            transform: scale(1.1);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(2px);
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 550px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: modalAppear 0.3s ease;
+        }
+        
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e1e8ed;
+        }
+        
+        .close-modal {
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #7f8c8d;
+            transition: color 0.3s;
+        }
+        
+        .close-modal:hover {
+            color: var(--danger-color);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-item:hover {
+            transform: translateY(-3px);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .filter-select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #e1e8ed;
+            background-color: white;
+        }
+        
+        .reset-all-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e8ed;
+            text-align: center;
+        }
+        
+        .export-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+        
+        footer {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+        }
+        
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .credits {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 10px;
+        }
+        
+        .credits a {
+            color: white;
+            text-decoration: none;
+        }
+        
+        .credits a:hover {
+            text-decoration: underline;
+        }
+        
+        .locality-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .locality-actions button {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+        
+        .completion-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            h2 {
+                font-size: 1.3rem;
+            }
+            
+            .localities-container,
+            .locality-blocks-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                flex-direction: column;
+            }
+            
+            .color-palette {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .export-options {
+                flex-direction: column;
+            }
+            
+            .locality-blocks-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            .locality-actions {
+                flex-direction: column;
+            }
+        }
+
+        /* Respect user's reduced motion preference */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+                animation: none !important;
+            }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: var(--success-color);
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.error {
+            background: var(--danger-color);
+        }
+        
+        .notification.warning {
+            background: var(--warning-color);
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <a href="#main" class="skip-link">Pular para o conteúdo</a>
+    <div class="notification" id="notification" role="status" aria-live="polite"></div>
+
+    <main id="main" class="container" role="main">
+        <header>
+            <h1><i class="fas fa-map-marked-alt"></i> Já Visitei?</h1>
+            <h2>Sistema de Acompanhamento de Cobertura de Território para ACEs</h2>
+        </header>
+        
+        <div class="card">
+            <h3><i class="fas fa-cog"></i> Configuração de Localidades</h3>
+            <p>Adicione as localidades e os quarteirões que deseja monitorar:</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label for="locality-name"><i class="fas fa-map-marker-alt"></i> Nome da Localidade:</label>
+                    <input type="text" id="locality-name" placeholder="Ex: Centro, Jardim América, etc.">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-palette"></i> Cor de identificação:</label>
+                    <div class="color-palette" id="color-palette" aria-hidden="false">
+                        <!-- Cores serão adicionadas dinamicamente -->
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                        <input type="color" id="color-picker" value="#3498db" aria-label="Escolher cor personalizada">
+                        <span>Cor personalizada</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label for="block-start"><i class="fas fa-hashtag"></i> Quarteirão inicial:</label>
+                    <input type="number" id="block-start" placeholder="Início" min="1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="block-end"><i class="fas fa-hashtag"></i> Quarteirão final:</label>
+                    <input type="number" id="block-end" placeholder="Fim" min="1">
+                </div>
+            </div>
+            
+            <button id="btn-add-locality"><i class="fas fa-plus-circle"></i> Adicionar Localidade</button>
+        </div>
+        
+        <div id="localities-container" class="localities-container" aria-live="polite">
+            <!-- As localidades serão adicionadas aqui dinamicamente -->
+        </div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="total-blocks">0</div>
+                <div class="stat-label">Total de Quarteirões</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="completed-blocks">0</div>
+                <div class="stat-label">Concluídos</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="in-progress-blocks">0</div>
+                <div class="stat-label">Em Andamento</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="progress-percentage">0%</div>
+                <div class="stat-label">Progresso Geral</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3><i class="fas fa-th-large"></i> Quadro de Quarteirões</h3>
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="filter-locality">Localidade:</label>
+                        <select id="filter-locality" class="filter-select">
+                            <option value="all">Todas</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-status">Status:</label>
+                        <select id="filter-status" class="filter-select">
+                            <option value="all">Todos</option>
+                            <option value="completed">Concluídos</option>
+                            <option value="in-progress">Em Andamento</option>
+                            <option value="pending">Pendentes</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-sort">Ordenar por:</label>
+                        <select id="filter-sort" class="filter-select">
+                            <option value="number">Número</option>
+                            <option value="completion-date">Data de Conclusão</option>
+                            <option value="progress">Progresso</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-order">Ordem:</label>
+                        <select id="filter-order" class="filter-select">
+                            <option value="asc">Crescente</option>
+                            <option value="desc">Decrescente</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="blocks-container" class="blocks-container" aria-live="polite">
+                <!-- Os blocos de quarteirões serão adicionados aqui dinamicamente -->
+            </div>
+            
+            <div class="export-options">
+                <button class="btn-info" id="btn-export-pdf">
+                    <i class="fas fa-file-pdf"></i> Exportar Relatório PDF
+                </button>
+                <button class="btn-warning" id="btn-reset-all">
+                    <i class="fas fa-undo"></i> Marcar Todos como Pendentes
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>Já visitei? - Sistema de Acompanhamento de Cobertura de Território para ACEs</p>
+            <p class="credits">
+                Desenvolvido por <a href="mailto:marcelo137@gmail.com">Marcelo Rodrigues</a>
+            </p>
+        </div>
+    </footer>
+    
+    <!-- Modal para editar dados do quarteirão -->
+    <div id="block-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Dados do Quarteirão <span id="modal-block-number"></span></h3>
+                <button class="close-modal" aria-label="Fechar modal">&times;</button>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label for="completion-date"><i class="fas fa-calendar-alt"></i> Data de Conclusão:</label>
+                    <input type="date" id="completion-date">
+                </div>
+                
+                <div class="form-group">
+                    <label for="status"><i class="fas fa-tasks"></i> Status:</label>
+                    <select id="status">
+                        <option value="pending">Pendente</option>
+                        <option value="in-progress">Em Andamento</option>
+                        <option value="completed">Concluído</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label for="total-properties"><i class="fas fa-home"></i> Total de Imóveis:</label>
+                    <input type="number" id="total-properties" min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="inspected-properties"><i class="fas fa-search"></i> Imóveis Inspecionados:</label>
+                    <input type="number" id="inspected-properties" min="0">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="observations"><i class="fas fa-sticky-note"></i> Observações:</label>
+                <textarea id="observations" rows="4" placeholder="Observações sobre o quarteirão..."></textarea>
+            </div>
+            
+            <div class="block-actions">
+                <button id="btn-save-block" class="btn-success"><i class="fas fa-save"></i> Salvar</button>
+                <button id="btn-cancel-block" class="btn-danger"><i class="fas fa-times"></i> Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar localidade -->
+    <div id="locality-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Editar Localidade</h3>
+                <button class="close-locality-modal" aria-label="Fechar modal">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label for="edit-locality-name">Nome da Localidade:</label>
+                <input type="text" id="edit-locality-name">
+            </div>
+            
+            <div class="form-group">
+                <label>Cor de identificação:</label>
+                <div class="color-palette" id="edit-color-palette">
+                    <!-- Cores serão adicionadas dinamicamente -->
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                    <input type="color" id="edit-color-picker" value="#3498db">
+                    <span>Cor personalizada</span>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label for="edit-block-start">Quarteirão inicial:</label>
+                    <input type="number" id="edit-block-start" min="1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-block-end">Quarteirão final:</label>
+                    <input type="number" id="edit-block-end" min="1">
+                </div>
+            </div>
+            
+            <div class="block-actions">
+                <button id="btn-save-locality" class="btn-success"><i class="fas fa-save"></i> Salvar Alterações</button>
+                <button id="btn-cancel-locality" class="btn-danger"><i class="fas fa-times"></i> Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dados da aplicação
+        let localities = [];
+        let currentEditingBlock = null;
+        let currentEditingLocality = null;
+        let filters = {
+            locality: 'all',
+            status: 'all',
+            sort: 'number',
+            order: 'asc'
+        };
+        
+        // Paleta de cores pré-definidas (apenas 7 cores)
+        const colorPalette = [
+            '#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22'
+        ];
+        
+        // Persistência: chave versionada
+        const STORAGE_KEY = 'aceTerritoryControl:v1';
+        const LEGACY_KEY = 'aceTerritoryControl';
+        
+        // Elementos DOM
+        const localitiesContainer = document.getElementById('localities-container');
+        const blocksContainer = document.getElementById('blocks-container');
+        const blockModal = document.getElementById('block-modal');
+        const localityModal = document.getElementById('locality-modal');
+        const filterLocality = document.getElementById('filter-locality');
+        const filterStatus = document.getElementById('filter-status');
+        const filterSort = document.getElementById('filter-sort');
+        const filterOrder = document.getElementById('filter-order');
+        const colorPaletteContainer = document.getElementById('color-palette');
+        const editColorPaletteContainer = document.getElementById('edit-color-palette');
+        const colorPicker = document.getElementById('color-picker');
+        const editColorPicker = document.getElementById('edit-color-picker');
+        const notification = document.getElementById('notification');
+        const btnExportPdf = document.getElementById('btn-export-pdf');
+        
+        // Utilitários
+        function uuid() {
+            return (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `id_${Date.now()}_${Math.random().toString(36).slice(2,9)}`;
+        }
+        
+        function debounce(fn, ms = 300) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn(...args), ms);
+            };
+        }
+        
+        function hexToRgb(hex) {
+            if (!hex) return { r: 0, g: 0, b: 0 };
+            const sanitized = hex.replace('#','');
+            const bigint = parseInt(sanitized.length === 3 ? sanitized.split('').map(c=>c+c).join('') : sanitized, 16);
+            return {
+                r: (bigint >> 16) & 255,
+                g: (bigint >> 8) & 255,
+                b: bigint & 255
+            };
+        }
+        
+        // Debounced save
+        const saveToLocalStorageDebounced = debounce(saveToLocalStorage, 600);
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeColorPalette();
+            initializeEditColorPalette();
+            loadFromLocalStorage();
+            renderLocalities();
+            renderBlocks();
+            updateStats();
+            updateFilters();
+            
+            // Event listeners para botões principais
+            document.getElementById('btn-add-locality').addEventListener('click', addLocality);
+            document.getElementById('btn-save-block').addEventListener('click', saveBlockData);
+            document.getElementById('btn-cancel-block').addEventListener('click', () => closeModal(blockModal));
+            document.getElementById('btn-reset-all').addEventListener('click', resetAllBlocks);
+            document.getElementById('btn-save-locality').addEventListener('click', saveLocalityChanges);
+            document.getElementById('btn-cancel-locality').addEventListener('click', () => closeModal(localityModal));
+            document.getElementById('btn-export-pdf').addEventListener('click', exportToPDF);
+            
+            // Filtros
+            filterLocality.addEventListener('change', function() {
+                filters.locality = this.value;
+                renderBlocks();
+            });
+            filterStatus.addEventListener('change', function() {
+                filters.status = this.value;
+                renderBlocks();
+            });
+            filterSort.addEventListener('change', function() {
+                filters.sort = this.value;
+                renderBlocks();
+            });
+            filterOrder.addEventListener('change', function() {
+                filters.order = this.value;
+                renderBlocks();
+            });
+            
+            // Delegação de eventos para ações de localidades e blocos
+            document.body.addEventListener('click', function(e) {
+                const btn = e.target.closest('button[data-action]');
+                if (!btn) return;
+                const action = btn.dataset.action;
+                const localityId = btn.dataset.localityId;
+                const blockNumber = btn.dataset.blockNumber ? parseInt(btn.dataset.blockNumber, 10) : null;
+                
+                switch(action) {
+                    case 'remove-locality':
+                        removeLocality(localityId);
+                        break;
+                    case 'edit-locality':
+                        editLocality(localityId);
+                        break;
+                    case 'mark-pending':
+                        markLocalityPending(localityId);
+                        break;
+                    case 'edit-block':
+                        editBlock(localityId, blockNumber);
+                        break;
+                    case 'reset-block':
+                        resetBlock(localityId, blockNumber);
+                        break;
+                    default:
+                        break;
+                }
+            });
+            
+            // Fechar modal ao clicar fora da modal-content
+            [blockModal, localityModal].forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) closeModal(modal);
+                });
+            });
+            
+            // Botões de fechar (acessíveis)
+            document.querySelectorAll('.close-modal, .close-locality-modal').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const modal = this.closest('.modal');
+                    if (modal) closeModal(modal);
+                });
+            });
+        });
+        
+        // Inicializar paletas usando DocumentFragment
+        function initializeColorPalette() {
+            colorPaletteContainer.innerHTML = '';
+            const frag = document.createDocumentFragment();
+            colorPalette.forEach((color, index) => {
+                const colorOption = document.createElement('button');
+                colorOption.type = 'button';
+                colorOption.className = 'color-option';
+                colorOption.style.backgroundColor = color;
+                colorOption.dataset.color = color;
+                colorOption.title = color;
+                colorOption.setAttribute('aria-label', `Selecionar cor ${color}`);
+                colorOption.setAttribute('aria-pressed', 'false');
+                colorOption.setAttribute('role', 'button');
+                
+                colorOption.addEventListener('click', () => {
+                    // remove seleção anterior
+                    colorPaletteContainer.querySelectorAll('.color-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                        opt.setAttribute('aria-pressed', 'false');
+                    });
+                    colorOption.classList.add('selected');
+                    colorOption.setAttribute('aria-pressed', 'true');
+                    colorPicker.value = color;
+                });
+                
+                frag.appendChild(colorOption);
+            });
+            colorPaletteContainer.appendChild(frag);
+            
+            // selecionar primeira
+            const first = colorPaletteContainer.querySelector('.color-option');
+            if (first) {
+                first.classList.add('selected');
+                first.setAttribute('aria-pressed', 'true');
+                colorPicker.value = first.dataset.color;
+            }
+        }
+        
+        function initializeEditColorPalette() {
+            editColorPaletteContainer.innerHTML = '';
+            const frag = document.createDocumentFragment();
+            colorPalette.forEach(color => {
+                const colorOption = document.createElement('button');
+                colorOption.type = 'button';
+                colorOption.className = 'color-option';
+                colorOption.style.backgroundColor = color;
+                colorOption.dataset.color = color;
+                colorOption.title = color;
+                colorOption.setAttribute('aria-label', `Selecionar cor ${color}`);
+                colorOption.setAttribute('aria-pressed', 'false');
+                colorOption.setAttribute('role', 'button');
+                
+                colorOption.addEventListener('click', () => {
+                    editColorPaletteContainer.querySelectorAll('.color-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                        opt.setAttribute('aria-pressed', 'false');
+                    });
+                    colorOption.classList.add('selected');
+                    colorOption.setAttribute('aria-pressed', 'true');
+                    editColorPicker.value = color;
+                });
+                
+                frag.appendChild(colorOption);
+            });
+            editColorPaletteContainer.appendChild(frag);
+        }
+        
+        // =============================================
+        // FUNÇÃO DE EXPORTAÇÃO PDF (melhorias)
+        // =============================================
+        async function exportToPDF() {
+            if (localities.length === 0) {
+                showNotification('Não há dados para exportar.', 'warning');
+                return;
+            }
+            
+            btnExportPdf.disabled = true;
+            btnExportPdf.textContent = 'Gerando PDF...';
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                const margin = 20;
+                let yPosition = margin;
+                const maxY = pageHeight - 30;
+                
+                // CAPA
+                doc.setFillColor(41, 128, 185);
+                doc.rect(0, 0, pageWidth, 60, 'F');
+                doc.setTextColor(255,255,255);
+                doc.setFontSize(24);
+                doc.setFont('helvetica', 'bold');
+                doc.text('RELATÓRIO DE COBERTURA', pageWidth / 2, 25, { align: 'center' });
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Sistema Já Visitei?', pageWidth / 2, 40, { align: 'center' });
+                yPosition = 80;
+                
+                doc.setTextColor(0,0,0);
+                doc.setFontSize(12);
+                doc.text(`Data do Relatório: ${new Date().toLocaleDateString('pt-BR')}`, margin, yPosition);
+                yPosition += 15;
+                
+                // ESTATÍSTICAS
+                const stats = calculateStatistics();
+                doc.setFontSize(16);
+                doc.setFont('helvetica','bold');
+                doc.text('ESTATÍSTICAS GERAIS', margin, yPosition);
+                yPosition += 10;
+                doc.setDrawColor(200,200,200);
+                doc.line(margin, yPosition, pageWidth - margin, yPosition);
+                yPosition += 12;
+                doc.setFontSize(12);
+                doc.setFont('helvetica','normal');
+                
+                const statsData = [
+                    `Total de Localidades: ${stats.totalLocalities}`,
+                    `Total de Quarteirões: ${stats.totalBlocks}`,
+                    `Concluídos: ${stats.completedBlocks} (${stats.completedPercentage}%)`,
+                    `Em Andamento: ${stats.inProgressBlocks} (${stats.inProgressPercentage}%)`,
+                    `Pendentes: ${stats.pendingBlocks} (${stats.pendingPercentage}%)`
+                ];
+                
+                statsData.forEach(stat => {
+                    if (yPosition > maxY) { doc.addPage(); yPosition = margin; }
+                    doc.text(stat, margin, yPosition);
+                    yPosition += 8;
+                });
+                yPosition += 10;
+                
+                // DETALHES POR LOCALIDADE
+                for (let idx = 0; idx < localities.length; idx++) {
+                    const locality = localities[idx];
+                    if (yPosition > maxY) { doc.addPage(); yPosition = margin; }
+                    
+                    doc.setFontSize(14);
+                    doc.setFont('helvetica','bold');
+                    doc.setTextColor(0,0,0);
+                    doc.text(`LOCALIDADE: ${locality.name}`, margin, yPosition);
+                    yPosition += 8;
+                    
+                    const localityStats = calculateLocalityStatistics(locality);
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica','normal');
+                    doc.text(`Progresso: ${localityStats.progress}% (${localityStats.completed}/${localityStats.total} quarteirões)`, margin, yPosition);
+                    yPosition += 10;
+                    
+                    // Barra de progresso usa cor da localidade
+                    const barWidth = 100;
+                    const progressWidth = (localityStats.progress / 100) * barWidth;
+                    const rgb = hexToRgb(locality.color);
+                    
+                    doc.setDrawColor(200,200,200);
+                    doc.setFillColor(230,230,230);
+                    doc.rect(margin, yPosition, barWidth, 6, 'F');
+                    doc.setFillColor(rgb.r, rgb.g, rgb.b);
+                    doc.rect(margin, yPosition, progressWidth, 6, 'F');
+                    yPosition += 12;
+                    
+                    // Cabeçalho da tabela
+                    if (yPosition > maxY - 60) { doc.addPage(); yPosition = margin; }
+                    doc.setFillColor(240,240,240);
+                    doc.rect(margin, yPosition, pageWidth - 2*margin, 8, 'F');
+                    doc.setFontSize(8);
+                    doc.setFont('helvetica','bold');
+                    doc.setTextColor(0,0,0);
+                    const colWidth = (pageWidth - 2 * margin) / 5;
+                    doc.text('Quarteirão', margin + 5, yPosition + 5);
+                    doc.text('Status', margin + colWidth + 5, yPosition + 5);
+                    doc.text('Data', margin + 2 * colWidth + 5, yPosition + 5);
+                    doc.text('Imóveis', margin + 3 * colWidth + 5, yPosition + 5);
+                    doc.text('Obs', margin + 4 * colWidth + 5, yPosition + 5);
+                    yPosition += 10;
+                    
+                    doc.setFont('helvetica','normal');
+                    doc.setFontSize(7);
+                    
+                    for (let b = 0; b < locality.blocks.length; b++) {
+                        const block = locality.blocks[b];
+                        if (yPosition > maxY - 20) { doc.addPage(); yPosition = margin;
+                            // repetir cabeçalho
+                            doc.setFillColor(240,240,240);
+                            doc.rect(margin, yPosition, pageWidth - 2*margin, 8, 'F');
+                            doc.setFontSize(8);
+                            doc.setFont('helvetica','bold');
+                            doc.text('Quarteirão', margin + 5, yPosition + 5);
+                            doc.text('Status', margin + colWidth + 5, yPosition + 5);
+                            doc.text('Data', margin + 2 * colWidth + 5, yPosition + 5);
+                            doc.text('Imóveis', margin + 3 * colWidth + 5, yPosition + 5);
+                            doc.text('Obs', margin + 4 * colWidth + 5, yPosition + 5);
+                            yPosition += 10;
+                            doc.setFontSize(7);
+                            doc.setFont('helvetica','normal');
+                        }
+                        
+                        // cor por status
+                        switch(block.status) {
+                            case 'completed':
+                                doc.setTextColor(39,174,96); break;
+                            case 'in-progress':
+                                doc.setTextColor(243,156,18); break;
+                            default:
+                                doc.setTextColor(231,76,60);
+                        }
+                        
+                        const statusText = getStatusText(block.status);
+                        const dateText = block.completionDate ? formatDate(block.completionDate) : '-';
+                        const propertiesText = block.totalProperties > 0 ? `${block.inspectedProperties}/${block.totalProperties}` : '-';
+                        const obsText = block.observations ? (block.observations.length > 30 ? block.observations.substring(0, 30) + '...' : block.observations) : '';
+                        
+                        doc.text(`Q${block.number}`, margin + 5, yPosition + 4);
+                        doc.text(statusText, margin + colWidth + 5, yPosition + 4);
+                        doc.text(dateText, margin + 2 * colWidth + 5, yPosition + 4);
+                        doc.text(propertiesText, margin + 3 * colWidth + 5, yPosition + 4);
+                        doc.text(obsText, margin + 4 * colWidth + 5, yPosition + 4);
+                        yPosition += 6;
+                    }
+                    
+                    yPosition += 10;
+                    if (idx < localities.length - 1) {
+                        doc.setDrawColor(200,200,200);
+                        doc.line(margin, yPosition, pageWidth - margin, yPosition);
+                        yPosition += 12;
+                    }
+                }
+                
+                // RODAPÉ
+                const totalPages = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= totalPages; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(100,100,100);
+                    doc.text(`Página ${i} de ${totalPages} • Gerado por Sistema Já Visitei? • ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+                }
+                
+                const fileName = `relatorio_cobertura_${new Date().toISOString().split('T')[0]}.pdf`;
+                doc.save(fileName);
+                showNotification('Relatório PDF gerado com sucesso!');
+            } catch (err) {
+                console.error('Erro ao gerar PDF:', err);
+                showNotification('Erro ao gerar PDF. Tente novamente.', 'error');
+            } finally {
+                btnExportPdf.disabled = false;
+                btnExportPdf.innerHTML = '<i class="fas fa-file-pdf"></i> Exportar Relatório PDF';
+            }
+        }
+        
+        function calculateStatistics() {
+            let totalLocalities = localities.length;
+            let totalBlocks = 0;
+            let completedBlocks = 0;
+            let inProgressBlocks = 0;
+            let pendingBlocks = 0;
+            
+            localities.forEach(locality => {
+                totalBlocks += locality.blocks.length;
+                completedBlocks += locality.blocks.filter(block => block.status === 'completed').length;
+                inProgressBlocks += locality.blocks.filter(block => block.status === 'in-progress').length;
+                pendingBlocks += locality.blocks.filter(block => block.status === 'pending').length;
+            });
+            
+            return {
+                totalLocalities,
+                totalBlocks,
+                completedBlocks,
+                inProgressBlocks,
+                pendingBlocks,
+                completedPercentage: totalBlocks > 0 ? Math.round((completedBlocks / totalBlocks) * 100) : 0,
+                inProgressPercentage: totalBlocks > 0 ? Math.round((inProgressBlocks / totalBlocks) * 100) : 0,
+                pendingPercentage: totalBlocks > 0 ? Math.round((pendingBlocks / totalBlocks) * 100) : 0
+            };
+        }
+        
+        function calculateLocalityStatistics(locality) {
+            const total = locality.blocks.length;
+            const completed = locality.blocks.filter(block => block.status === 'completed').length;
+            const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+            
+            return { total, completed, progress };
+        }
+        
+        function getStatusText(status) {
+            switch(status) {
+                case 'completed': return 'Concluído';
+                case 'in-progress': return 'Em Andamento';
+                default: return 'Pendente';
+            }
+        }
+
+        // =============================================
+        // FUNÇÕES EXISTENTES DA APLICAÇÃO (MANTIDAS, MAS MELHORADAS)
+        // =============================================
+        
+        // Funções para Localidades
+        function addLocality() {
+            const name = document.getElementById('locality-name').value.trim();
+            const color = colorPicker.value;
+            const startVal = document.getElementById('block-start').value;
+            const endVal = document.getElementById('block-end').value;
+            const start = parseInt(startVal, 10);
+            const end = parseInt(endVal, 10);
+            
+            if (!name || isNaN(start) || isNaN(end) || start > end) {
+                showNotification('Preencha todos os campos corretamente.', 'error');
+                return;
+            }
+            
+            if (end - start > 100) {
+                if (!confirm(`Você está adicionando ${end - start + 1} quarteirões. Tem certeza que deseja continuar?`)) {
+                    return;
+                }
+            }
+            
+            const locality = {
+                id: uuid(),
+                name,
+                color,
+                blocks: generateBlocks(start, end),
+                createdAt: new Date().toISOString()
+            };
+            
+            localities.push(locality);
+            renderLocalities();
+            renderBlocks();
+            updateStats();
+            updateFilters();
+            saveToLocalStorageDebounced();
+            
+            // Limpar formulário
+            document.getElementById('locality-name').value = '';
+            document.getElementById('block-start').value = '';
+            document.getElementById('block-end').value = '';
+            
+            showNotification(`Localidade "${name}" adicionada com sucesso!`);
+        }
+        
+        function generateBlocks(start, end) {
+            const blocks = [];
+            for (let i = start; i <= end; i++) {
+                blocks.push({
+                    number: i,
+                    completionDate: null,
+                    totalProperties: 0,
+                    inspectedProperties: 0,
+                    observations: '',
+                    status: 'pending',
+                    lastUpdated: null
+                });
+            }
+            return blocks;
+        }
+        
+        function renderLocalities() {
+            localitiesContainer.innerHTML = '';
+            if (localities.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-state';
+                const icon = document.createElement('i'); icon.className = 'fas fa-map';
+                const h3 = document.createElement('h3'); h3.textContent = 'Nenhuma localidade cadastrada';
+                const p = document.createElement('p'); p.textContent = 'Adicione sua primeira localidade usando o formulário acima.';
+                empty.appendChild(icon); empty.appendChild(h3); empty.appendChild(p);
+                localitiesContainer.appendChild(empty);
+                return;
+            }
+            
+            const frag = document.createDocumentFragment();
+            localities.forEach(locality => {
+                const completedBlocks = locality.blocks.filter(block => block.status === 'completed').length;
+                const inProgressBlocks = locality.blocks.filter(block => block.status === 'in-progress').length;
+                const totalBlocks = locality.blocks.length;
+                const progress = totalBlocks > 0 ? Math.round(completedBlocks/totalBlocks*100) : 0;
+                
+                const localityCard = document.createElement('div');
+                localityCard.className = 'locality-card';
+                localityCard.style.backgroundColor = locality.color;
+                // make card keyboard-focusable and expose summary for screen readers
+                localityCard.tabIndex = 0;
+                localityCard.setAttribute('role', 'group');
+                localityCard.setAttribute('aria-label', `Localidade ${locality.name}, ${completedBlocks} de ${totalBlocks} quarteirões concluídos.`);
+                
+                const left = document.createElement('div');
+                const nameEl = document.createElement('div'); nameEl.className = 'locality-name'; nameEl.textContent = locality.name;
+                const range = document.createElement('div'); range.textContent = `Quarteirões: ${locality.blocks[0].number} a ${locality.blocks[locality.blocks.length - 1].number}`;
+                const stats = document.createElement('div'); stats.className = 'completion-stats';
+                stats.innerHTML = `<span><i class="fas fa-check-circle"></i> ${completedBlocks}</span>
+                                   <span><i class="fas fa-play-circle"></i> ${inProgressBlocks}</span>
+                                   <span><i class="fas fa-clock"></i> ${totalBlocks - completedBlocks - inProgressBlocks}</span>`;
+                const progressWrap = document.createElement('div');
+                progressWrap.style.marginTop = '10px';
+                const barWrap = document.createElement('div');
+                barWrap.style.height = '8px'; barWrap.style.background = 'rgba(255,255,255,0.3)'; barWrap.style.borderRadius = '4px'; barWrap.style.overflow = 'hidden';
+                const barInner = document.createElement('div');
+                barInner.style.height = '100%'; barInner.style.width = `${progress}%`; barInner.style.background = 'white'; barInner.style.borderRadius = '4px'; barInner.style.transition = 'width 0.5s ease';
+                barWrap.appendChild(barInner);
+                
+                left.appendChild(nameEl); left.appendChild(range); left.appendChild(stats); progressWrap.appendChild(barWrap); left.appendChild(progressWrap);
+                
+                const actions = document.createElement('div'); actions.className = 'locality-actions';
+                const btnPending = document.createElement('button');
+                btnPending.type = 'button'; btnPending.className = 'btn-small btn-warning'; btnPending.dataset.action = 'mark-pending'; btnPending.dataset.localityId = locality.id;
+                btnPending.innerHTML = '<i class="fas fa-undo"></i> Pendentes';
+                const btnEdit = document.createElement('button');
+                btnEdit.type = 'button'; btnEdit.className = 'btn-small btn-info'; btnEdit.dataset.action = 'edit-locality'; btnEdit.dataset.localityId = locality.id;
+                btnEdit.innerHTML = '<i class="fas fa-edit"></i> Editar';
+                const btnRemove = document.createElement('button');
+                btnRemove.type = 'button'; btnRemove.className = 'btn-small btn-danger'; btnRemove.dataset.action = 'remove-locality'; btnRemove.dataset.localityId = locality.id;
+                btnRemove.innerHTML = '<i class="fas fa-trash"></i> Excluir';
+                
+                actions.appendChild(btnPending); actions.appendChild(btnEdit); actions.appendChild(btnRemove);
+                
+                localityCard.appendChild(left);
+                localityCard.appendChild(actions);
+                frag.appendChild(localityCard);
+            });
+            localitiesContainer.appendChild(frag);
+        }
+        
+        function removeLocality(id) {
+            const locality = localities.find(l => l.id === id);
+            if (!locality) return;
+            if (confirm(`Tem certeza que deseja remover a localidade "${locality.name}"? Todos os dados dos quarteirões serão perdidos.`)) {
+                localities = localities.filter(locality => locality.id !== id);
+                renderLocalities();
+                renderBlocks();
+                updateStats();
+                updateFilters();
+                saveToLocalStorageDebounced();
+                showNotification(`Localidade "${locality.name}" removida.`);
+            }
+        }
+        
+        function editLocality(id) {
+            const locality = localities.find(l => l.id === id);
+            if (!locality) return;
+            currentEditingLocality = locality;
+            
+            document.getElementById('edit-locality-name').value = locality.name;
+            editColorPicker.value = locality.color;
+            document.getElementById('edit-block-start').value = locality.blocks[0].number;
+            document.getElementById('edit-block-end').value = locality.blocks[locality.blocks.length - 1].number;
+            
+            editColorPaletteContainer.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+            const match = Array.from(editColorPaletteContainer.querySelectorAll('.color-option')).find(opt => opt.dataset.color === locality.color);
+            if (match) match.classList.add('selected');
+            
+            openModal(localityModal);
+        }
+        
+        function saveLocalityChanges() {
+            if (!currentEditingLocality) return;
+            const name = document.getElementById('edit-locality-name').value.trim();
+            const color = editColorPicker.value;
+            const newStart = parseInt(document.getElementById('edit-block-start').value, 10);
+            const newEnd = parseInt(document.getElementById('edit-block-end').value, 10);
+            
+            if (!name || isNaN(newStart) || isNaN(newEnd) || newStart > newEnd) {
+                showNotification('Preencha todos os campos corretamente.', 'error');
+                return;
+            }
+            
+            const currentStart = currentEditingLocality.blocks[0].number;
+            const currentEnd = currentEditingLocality.blocks[currentEditingLocality.blocks.length - 1].number;
+            
+            if (newStart !== currentStart || newEnd !== currentEnd) {
+                if (!confirm(`Alterar os quarteirões de ${currentStart}-${currentEnd} para ${newStart}-${newEnd}? Os dados dos quarteirões serão redefinidos.`)) {
+                    return;
+                }
+                currentEditingLocality.blocks = generateBlocks(newStart, newEnd);
+            }
+            
+            currentEditingLocality.name = name;
+            currentEditingLocality.color = color;
+            
+            renderLocalities();
+            renderBlocks();
+            updateStats();
+            updateFilters();
+            saveToLocalStorageDebounced();
+            closeModal(localityModal);
+            showNotification(`Localidade "${name}" atualizada com sucesso!`);
+        }
+        
+        function markLocalityPending(localityId) {
+            const locality = localities.find(l => l.id === localityId);
+            if (!locality) return;
+            if (confirm(`Marcar TODOS os quarteirões de "${locality.name}" como Pendentes?`)) {
+                locality.blocks.forEach(block => {
+                    const totalProperties = block.totalProperties;
+                    block.completionDate = null;
+                    block.inspectedProperties = 0;
+                    block.observations = '';
+                    block.status = 'pending';
+                    block.lastUpdated = new Date().toISOString();
+                    block.totalProperties = totalProperties;
+                });
+                renderLocalities();
+                renderBlocks();
+                updateStats();
+                saveToLocalStorageDebounced();
+                showNotification(`Todos os quarteirões de ${locality.name} marcados como pendentes.`);
+            }
+        }
+        
+        // Funções para Blocos (Quarteirões)
+        function renderBlocks() {
+            blocksContainer.innerHTML = '';
+            let hasBlocks = false;
+            let filteredLocalities = localities;
+            
+            if (filters.locality !== 'all') {
+                filteredLocalities = localities.filter(locality => locality.id.toString() === filters.locality.toString());
+            }
+            
+            const frag = document.createDocumentFragment();
+            filteredLocalities.forEach(locality => {
+                let localityBlocks = [...locality.blocks];
+                if (filters.status !== 'all') {
+                    localityBlocks = localityBlocks.filter(block => block.status === filters.status);
+                }
+                
+                localityBlocks.sort((a, b) => {
+                    let result = 0;
+                    switch(filters.sort) {
+                        case 'completion-date':
+                            if (a.status === 'completed' && b.status !== 'completed') return -1;
+                            if (a.status !== 'completed' && b.status === 'completed') return 1;
+                            if (a.status === 'completed' && b.status === 'completed') {
+                                if (!a.completionDate && !b.completionDate) result = a.number - b.number;
+                                else if (!a.completionDate) return 1;
+                                else if (!b.completionDate) return -1;
+                                else result = new Date(b.completionDate) - new Date(a.completionDate);
+                            } else {
+                                result = a.number - b.number;
+                            }
+                            break;
+                        case 'progress':
+                            const progressA = a.totalProperties > 0 ? a.inspectedProperties / a.totalProperties : 0;
+                            const progressB = b.totalProperties > 0 ? b.inspectedProperties / b.totalProperties : 0;
+                            result = progressB - progressA;
+                            break;
+                        default:
+                            result = a.number - b.number;
+                    }
+                    return filters.order === 'desc' ? -result : result;
+                });
+                
+                if (localityBlocks.length > 0) {
+                    hasBlocks = true;
+                    const localitySection = document.createElement('div');
+                    localitySection.className = 'locality-blocks';
+                    
+                    const completedBlocks = locality.blocks.filter(block => block.status === 'completed').length;
+                    const totalBlocks = locality.blocks.length;
+                    const progress = totalBlocks > 0 ? Math.round(completedBlocks/totalBlocks*100) : 0;
+                    
+                    const header = document.createElement('div'); header.className = 'locality-blocks-header';
+                    const title = document.createElement('div'); title.className = 'locality-blocks-title'; title.style.color = locality.color;
+                    title.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${escapeText(locality.name)} <span style="font-size: 0.9rem; font-weight: normal; margin-left: 10px;">(${completedBlocks}/${totalBlocks} concluídos)</span>`;
+                    
+                    const right = document.createElement('div');
+                    right.innerHTML = `<span>Progresso: ${progress}%</span>
+                        <div style="height: 8px; width: 150px; background: #f1f1f1; border-radius: 4px; margin-top: 5px; overflow: hidden;">
+                            <div style="height: 100%; width: ${progress}%; background: ${locality.color}; border-radius: 4px;"></div>
+                        </div>`;
+                    
+                    header.appendChild(title); header.appendChild(right);
+                    localitySection.appendChild(header);
+                    
+                    const blocksGrid = document.createElement('div');
+                    blocksGrid.className = 'locality-blocks-grid';
+                    blocksGrid.id = `blocks-${locality.id}`;
+                    
+                    localityBlocks.forEach(block => {
+                        const blockElement = document.createElement('div');
+                        blockElement.className = `block ${block.status}`;
+                        blockElement.style.borderTopColor = locality.color;
+                        
+                        const blockNumberDiv = document.createElement('div'); blockNumberDiv.className = 'block-number';
+                        const spanNum = document.createElement('span'); spanNum.textContent = `Q${block.number}`;
+                        const spanStatus = document.createElement('span'); spanStatus.className = 'block-status';
+                        spanStatus.textContent = getStatusText(block.status);
+                        blockNumberDiv.appendChild(spanNum); blockNumberDiv.appendChild(spanStatus);
+                        
+                        blockElement.appendChild(blockNumberDiv);
+                        
+                        const details = document.createElement('div'); details.className = 'block-details';
+                        if (block.status !== 'pending') {
+                            if (block.completionDate) {
+                                const d = document.createElement('div'); d.innerHTML = `<i class="fas fa-calendar"></i> ${formatDate(block.completionDate)}`; details.appendChild(d);
+                            }
+                            const prop = document.createElement('div'); prop.innerHTML = `<i class="fas fa-home"></i> ${block.inspectedProperties}/${block.totalProperties} imóveis`; details.appendChild(prop);
+                            if (block.observations) {
+                                const obs = document.createElement('div'); obs.innerHTML = `<i class="fas fa-sticky-note"></i> ${escapeText(truncateText(block.observations, 50))}`; details.appendChild(obs);
+                            }
+                        } else {
+                            details.innerHTML = `<div><i class="fas fa-clock"></i> Aguardando inspeção</div>`;
+                        }
+                        blockElement.appendChild(details);
+                        
+                        if (block.status === 'in-progress') {
+                            const progressPerc = block.totalProperties > 0 ? Math.round(block.inspectedProperties/block.totalProperties*100) : 0;
+                            const prog = document.createElement('div'); prog.className = 'block-progress';
+                            const progBar = document.createElement('div'); progBar.className = 'block-progress-bar'; progBar.style.width = `${progressPerc}%`;
+                            prog.appendChild(progBar);
+                            blockElement.appendChild(prog);
+                            const rightText = document.createElement('div'); rightText.style.fontSize = '0.8rem'; rightText.style.textAlign = 'right'; rightText.textContent = `${progressPerc}% concluído`;
+                            blockElement.appendChild(rightText);
+                        }
+                        
+                        const actions = document.createElement('div'); actions.className = 'block-actions';
+                        const btnEdit = document.createElement('button'); btnEdit.type = 'button'; btnEdit.dataset.action = 'edit-block'; btnEdit.dataset.localityId = locality.id; btnEdit.dataset.blockNumber = block.number;
+                        btnEdit.innerHTML = `<i class="fas fa-edit"></i> ${block.status === 'pending' ? 'Iniciar' : 'Editar'}`;
+                        actions.appendChild(btnEdit);
+                        if (block.status !== 'pending') {
+                            const btnReset = document.createElement('button'); btnReset.type = 'button'; btnReset.className = 'btn-warning'; btnReset.dataset.action = 'reset-block'; btnReset.dataset.localityId = locality.id; btnReset.dataset.blockNumber = block.number;
+                            btnReset.innerHTML = '<i class="fas fa-undo"></i> Reiniciar';
+                            actions.appendChild(btnReset);
+                        }
+                        blockElement.appendChild(actions);
+                        
+                        blocksGrid.appendChild(blockElement);
+                    });
+                    
+                    localitySection.appendChild(blocksGrid);
+                    frag.appendChild(localitySection);
+                }
+            });
+            
+            if (!hasBlocks) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-state';
+                const icon = document.createElement('i'); icon.className = 'fas fa-th-large';
+                const h3 = document.createElement('h3'); h3.textContent = 'Nenhum quarteirão encontrado';
+                const p = document.createElement('p'); p.textContent = 'Adicione mais localidades ou ajuste os filtros.';
+                empty.appendChild(icon); empty.appendChild(h3); empty.appendChild(p);
+                blocksContainer.appendChild(empty);
+            } else {
+                blocksContainer.appendChild(frag);
+            }
+        }
+        
+        function editBlock(localityId, blockNumber) {
+            const locality = localities.find(l => l.id === localityId);
+            if (!locality) return;
+            const block = locality.blocks.find(b => b.number === blockNumber);
+            if (!block) return;
+            
+            currentEditingBlock = { localityId, blockNumber };
+            
+            document.getElementById('modal-block-number').textContent = `${locality.name} - Q${block.number}`;
+            document.getElementById('completion-date').value = block.completionDate || '';
+            document.getElementById('total-properties').value = block.totalProperties || '';
+            document.getElementById('inspected-properties').value = block.inspectedProperties || '';
+            document.getElementById('observations').value = block.observations || '';
+            document.getElementById('status').value = block.status === 'pending' ? 'completed' : block.status;
+            
+            openModal(blockModal);
+        }
+        
+        function resetBlock(localityId, blockNumber) {
+            if (!confirm('Tem certeza que deseja reiniciar este quarteirão?')) return;
+            const locality = localities.find(l => l.id === localityId);
+            if (!locality) return;
+            const block = locality.blocks.find(b => b.number === blockNumber);
+            if (!block) return;
+            
+            const totalProperties = block.totalProperties;
+            block.completionDate = null;
+            block.inspectedProperties = 0;
+            block.observations = '';
+            block.status = 'pending';
+            block.lastUpdated = new Date().toISOString();
+            block.totalProperties = totalProperties;
+            
+            renderLocalities();
+            renderBlocks();
+            updateStats();
+            saveToLocalStorageDebounced();
+            showNotification(`Quarteirão Q${block.number} reiniciado.`);
+        }
+        
+        function resetAllBlocks() {
+            if (!confirm('Tem certeza que deseja marcar TODOS os quarteirões como Pendentes? Esta ação não pode ser desfeita.')) return;
+            localities.forEach(locality => {
+                locality.blocks.forEach(block => {
+                    const totalProperties = block.totalProperties;
+                    block.completionDate = null;
+                    block.inspectedProperties = 0;
+                    block.observations = '';
+                    block.status = 'pending';
+                    block.lastUpdated = new Date().toISOString();
+                    block.totalProperties = totalProperties;
+                });
+            });
+            renderLocalities();
+            renderBlocks();
+            updateStats();
+            saveToLocalStorageDebounced();
+            showNotification('Todos os quarteirões foram marcados como pendentes.');
+        }
+        
+        function saveBlockData() {
+            if (!currentEditingBlock) return;
+            const locality = localities.find(l => l.id === currentEditingBlock.localityId);
+            const block = locality.blocks.find(b => b.number === currentEditingBlock.blockNumber);
+            if (!block) return;
+            
+            const completionDate = document.getElementById('completion-date').value;
+            const totalProperties = parseInt(document.getElementById('total-properties').value, 10) || 0;
+            const inspectedProperties = parseInt(document.getElementById('inspected-properties').value, 10) || 0;
+            const observations = document.getElementById('observations').value.trim();
+            const status = document.getElementById('status').value;
+            
+            if (inspectedProperties > totalProperties) {
+                showNotification('O número de imóveis inspecionados não pode ser maior que o total de imóveis.', 'error');
+                return;
+            }
+            if (status === 'completed' && !completionDate) {
+                showNotification('Para marcar como concluído, é necessário informar a data de conclusão.', 'error');
+                return;
+            }
+            
+            block.completionDate = completionDate || null;
+            block.totalProperties = totalProperties;
+            block.inspectedProperties = inspectedProperties;
+            block.observations = observations;
+            block.status = status;
+            block.lastUpdated = new Date().toISOString();
+            
+            renderLocalities();
+            renderBlocks();
+            updateStats();
+            saveToLocalStorageDebounced();
+            closeModal(blockModal);
+            showNotification(`Quarteirão Q${block.number} atualizado com sucesso!`);
+        }
+        
+        // Filtros
+        function updateFilters() {
+            filterLocality.innerHTML = '';
+            const defaultOpt = document.createElement('option'); defaultOpt.value = 'all'; defaultOpt.textContent = 'Todas';
+            filterLocality.appendChild(defaultOpt);
+            localities.forEach(locality => {
+                const option = document.createElement('option');
+                option.value = locality.id;
+                option.textContent = locality.name;
+                filterLocality.appendChild(option);
+            });
+        }
+        
+        // Notificações
+        function showNotification(message, type = 'success') {
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Utilitárias
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return new Intl.DateTimeFormat('pt-BR').format(date);
+        }
+        
+        function truncateText(text, maxLength) {
+            if (!text) return '';
+            return text.length <= maxLength ? text : text.substring(0, maxLength) + '...';
+        }
+        
+        // Escape simples para evitar inserção direta como HTML
+        function escapeText(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+        
+        function updateStats() {
+            let totalBlocks = 0;
+            let completedBlocks = 0;
+            let inProgressBlocks = 0;
+            
+            localities.forEach(locality => {
+                totalBlocks += locality.blocks.length;
+                completedBlocks += locality.blocks.filter(block => block.status === 'completed').length;
+                inProgressBlocks += locality.blocks.filter(block => block.status === 'in-progress').length;
+            });
+            
+            document.getElementById('total-blocks').textContent = totalBlocks;
+            document.getElementById('completed-blocks').textContent = completedBlocks;
+            document.getElementById('in-progress-blocks').textContent = inProgressBlocks;
+            document.getElementById('progress-percentage').textContent = totalBlocks > 0 ? Math.round(completedBlocks/totalBlocks*100) + '%' : '0%';
+        }
+        
+        // Persistência de Dados (com migração)
+        function saveToLocalStorage() {
+            try {
+                const data = { localities, lastSave: new Date().toISOString() };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch (e) {
+                console.error('Erro ao salvar dados:', e);
+            }
+        }
+        
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_KEY);
+            if (!saved) return;
+            try {
+                const data = JSON.parse(saved);
+                localities = data.localities || [];
+                
+                // Caso venha da chave legada, re-salvar na chave nova
+                if (localStorage.getItem(LEGACY_KEY) && !localStorage.getItem(STORAGE_KEY)) {
+                    saveToLocalStorage();
+                }
+            } catch (e) {
+                console.error('Erro ao carregar dados:', e);
+                localities = [];
+            }
+        }
+        
+        // Modal accessibility: open/close, focus trap, ESC
+        function getFocusableElements(container) {
+            return Array.from(container.querySelectorAll('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'))
+                .filter(el => el.offsetParent !== null); // visible
+        }
+        
+        function openModal(modal) {
+            modal.style.display = 'flex';
+            modal.setAttribute('aria-hidden', 'false');
+            const focusable = getFocusableElements(modal);
+            const first = focusable[0] || modal;
+            first.focus();
+            
+            function keyHandler(e) {
+                if (e.key === 'Escape') {
+                    closeModal(modal);
+                } else if (e.key === 'Tab') {
+                    // focus trap
+                    const focusableEls = getFocusableElements(modal);
+                    if (focusableEls.length === 0) return;
+                    const firstEl = focusableEls[0];
+                    const lastEl = focusableEls[focusableEls.length - 1];
+                    if (e.shiftKey && document.activeElement === firstEl) {
+                        e.preventDefault();
+                        lastEl.focus();
+                    } else if (!e.shiftKey && document.activeElement === lastEl) {
+                        e.preventDefault();
+                        firstEl.focus();
+                    }
+                }
+            }
+            modal._keyHandler = keyHandler;
+            document.addEventListener('keydown', keyHandler);
+        }
+        
+        function closeModal(modal) {
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+            if (modal._keyHandler) {
+                document.removeEventListener('keydown', modal._keyHandler);
+                modal._keyHandler = null;
+            }
+            
+            // reset current editors
+            if (modal === blockModal) currentEditingBlock = null;
+            if (modal === localityModal) currentEditingLocality = null;
+        }
+    </script>
+</body>
+</html>
